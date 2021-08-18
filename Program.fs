@@ -1,8 +1,4 @@
-﻿// Learn more about F# at http://docs.microsoft.com/dotnet/fsharp
-
-open System
-
-open Microsoft.Playwright
+﻿open Microsoft.Playwright
 open System.Threading.Tasks
 open FSharp.Control.Tasks
 open System.IO
@@ -57,6 +53,8 @@ let getPage (url: string) (browser: Task<IBrowser>) =
         let! res = page.GotoAsync url
 
         if not res.Ok then
+            // we should be able to handle this part better if
+            // we use result instead of just the type
             return failwith "We couldn't navigate to that page"
 
         return page
@@ -66,10 +64,17 @@ let convertElementToPost (element: IElementHandle) =
     task {
         let! headerContent = element.QuerySelectorAsync(".title")
         let! author = element.QuerySelectorAsync(".subtitle a")
+
         let! content = element.QuerySelectorAsync(".content")
+
+        (* Content looks like
+Simple things in F If you come from PHP, Javascript this might help you understand a... #dotnet  #fsharp  #mvc  #saturn \nJul 16, 2021
+         *)
+
         let! title = headerContent.InnerTextAsync()
         let! authorText = author.InnerTextAsync()
         let! rawContent = content.InnerTextAsync()
+        // try to split the summary and the tags
         let summaryParts = rawContent.Split("...")
 
         let summary =
@@ -77,11 +82,14 @@ let convertElementToPost (element: IElementHandle) =
             |> Array.tryHead
             |> Option.defaultValue ""
 
+        // try to split the tags and the date
         let extraParts =
             (summaryParts
              |> Array.tryLast
              |> Option.defaultValue "\n")
                 .Split '\n'
+
+        // split the tags given that each has a '#' and trim it, remove it if it's whitespace
 
         let tags =
             (extraParts
@@ -89,7 +97,9 @@ let convertElementToPost (element: IElementHandle) =
              |> Option.defaultValue "")
                 .Split('#')
             |> Array.map (fun s -> s.Trim())
-            |> Array.filter (fun s -> s.Length > 0)
+            // filter out those that are not null or whitespace or empty strings
+            // equivalent to not(String.IsNullOrWhiteSpace(value))
+            |> Array.filter (System.String.IsNullOrWhiteSpace >> not)
 
         let date =
             extraParts
@@ -138,7 +148,7 @@ let writePostsToFile (posts: Task<Post array>) =
 
 
 [<EntryPoint>]
-let main argv =
+let main _ =
     Playwright.CreateAsync()
     |> getBrowser Firefox
     |> getPage "https://blog.tunaxor.me"
