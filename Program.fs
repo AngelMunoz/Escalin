@@ -38,11 +38,11 @@ let getBrowser (kind: Browser) (pl: Task<IPlaywright>) =
             match kind with
             | Chromium -> pl.Chromium.LaunchAsync()
             | Chrome ->
-                let opts = new BrowserTypeLaunchOptions()
+                let opts = BrowserTypeLaunchOptions()
                 opts.Channel <- "chrome"
                 pl.Chromium.LaunchAsync(opts)
             | Edge ->
-                let opts = new BrowserTypeLaunchOptions()
+                let opts = BrowserTypeLaunchOptions()
                 opts.Channel <- "msedge"
                 pl.Chromium.LaunchAsync(opts)
             | Firefox -> pl.Firefox.LaunchAsync()
@@ -79,14 +79,14 @@ let convertElementToPost (element: IElementHandle) =
 
         let extraParts =
             (summaryParts
-                |> Array.tryLast
-                |> Option.defaultValue "\n")
+             |> Array.tryLast
+             |> Option.defaultValue "\n")
                 .Split '\n'
 
         let tags =
             (extraParts
-                |> Array.tryHead
-                |> Option.defaultValue "")
+             |> Array.tryHead
+             |> Option.defaultValue "")
                 .Split('#')
             |> Array.map (fun s -> s.Trim())
             |> Array.filter (fun s -> s.Length > 0)
